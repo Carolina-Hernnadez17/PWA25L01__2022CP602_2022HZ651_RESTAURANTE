@@ -17,7 +17,7 @@ namespace L01_2022CP602_2022HZ651.Controllers
         }
 
         /// <summary>
-        /// EndPoint que retorna el listado de todos los libros existentes
+        /// EndPoint que retorna el listado de todos los platos existentes
         /// </summary>
         /// <returns></returns>
 
@@ -35,36 +35,9 @@ namespace L01_2022CP602_2022HZ651.Controllers
         }
 
         /// <summary>
-        /// EndPoint que retorna el registro de un libro por su Id, incluyendo el nombre del autor
+        /// EndPoint guardar platos
         /// </summary>
         /// <returns></returns>
-
-        //[HttpGet]
-        //[Route("GetById/{id}")]
-        //public IActionResult Get(int id)
-        //{
-        //    var resultado = (from e in _RestauranteContexto.Libro
-        //                     join a in _RestauranteContexto.Autor
-        //                     on e.AutorId equals a.Id
-        //                     where e.Id == id
-        //                     select new
-        //                     {
-        //                         e.Id,
-        //                         e.Titulo,
-        //                         e.AnioPublicacion,
-        //                         e.AutorId,
-        //                         e.CategoriaId,
-        //                         e.Resumen,
-        //                         Nombre_Autor = a.Nombre
-        //                     }).FirstOrDefault();
-
-        //    if (resultado == null)
-        //    {
-        //        return NotFound();
-        //    }
-
-        //    return Ok(resultado);
-        //}
 
 
 
@@ -84,52 +57,51 @@ namespace L01_2022CP602_2022HZ651.Controllers
                 return BadRequest(ex.Message);
             }
         }
-
+        /// <summary>
+        /// EndPoint actualizar platos
+        /// </summary>
+        /// <returns></returns>
+        /// 
         [HttpPut]
         [Route("actualizar/{id}")]
         public IActionResult ActualizarPlatos(int id, [FromBody] platos platosModificar)
         {
-            // Para actualizar un registro, se obtiene el registro original de la base de datos
-            // al cual alteraremos alguna propiedad
             platos? platosActual = (from e in _RestauranteContexto.platos
                                     where e.platoId == id
                                     select e).FirstOrDefault();
 
-            // Verificamos que exista el registro segun su ID
             if (platosActual == null)
             {
                 return NotFound();
             }
 
-            // Si se encuentra el registro, se alteran los campos modificables
             platosActual.nombrePlato = platosModificar.nombrePlato;
             platosActual.precio = platosModificar.precio;
 
-            // Se marca el registro como modificado en el contexto
-            // y se envia la modificacion a la base de datos
             _RestauranteContexto.Entry(platosActual).State = EntityState.Modified;
             _RestauranteContexto.SaveChanges();
 
             return Ok(platosModificar);
         }
+        /// <summary>
+        /// EndPoint eliminar platos
+        /// </summary>
+        /// <returns></returns>
+        /// 
 
         [HttpDelete]
         [Route("eliminar/{id}")]
         public IActionResult Eliminarplatos(int id)
         {
-            // Para actualizar un registro, se obtiene el registro original de la base de datos
-            // al cual eliminaremos
             platos? platos = (from e in _RestauranteContexto.platos
                               where e.platoId == id
                               select e).FirstOrDefault();
 
-            // Verificamos que exista el registro según su ID
             if (platos == null)
             {
                 return NotFound();
             }
 
-            // Ejecutamos la acción de eliminar el registro
             _RestauranteContexto.platos.Attach(platos);
             _RestauranteContexto.platos.Remove(platos);
             _RestauranteContexto.SaveChanges();
@@ -137,16 +109,16 @@ namespace L01_2022CP602_2022HZ651.Controllers
             return Ok(platos);
         }
         /// <summary>
-        /// EndPoint que retorna el registro de un libro por su Id, incluyendo el nombre del autor
+        /// EndPoint para retornar el listado de los platos filtrados cuando el precio sea menor de un valor dado.
         /// </summary>
         /// <returns></returns>
 
         [HttpGet]
-        [Route("GetById/{id}")]
-        public IActionResult Get(int id)
+        [Route("GetById/{precio}")]
+        public IActionResult Get(decimal precio)
         {
             List<platos> platos = (from e in _RestauranteContexto.platos
-                                   where e.precio < id
+                                   where e.precio < precio
                                    select e).ToList();
 
             if (!platos.Any())
