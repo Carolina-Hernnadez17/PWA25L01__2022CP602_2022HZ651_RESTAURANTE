@@ -25,13 +25,13 @@ namespace L01_2022CP602_2022HZ651.Controllers
         [Route("GetAll")]
         public IActionResult Get()
         {
-            List<platos> listadoLibro = (from e in _RestauranteContexto.platos
+            List<platos> listadoplatos = (from e in _RestauranteContexto.platos
                                          select e).ToList();
-            if (listadoLibro.Count() == 0)
+            if (listadoplatos.Count() == 0)
             {
                 return NotFound();
             }
-            return Ok(listadoLibro);
+            return Ok(listadoplatos);
         }
 
         /// <summary>
@@ -54,7 +54,7 @@ namespace L01_2022CP602_2022HZ651.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"Error al guardar el plato: {ex.Message}");
             }
         }
         /// <summary>
@@ -114,7 +114,7 @@ namespace L01_2022CP602_2022HZ651.Controllers
         /// <returns></returns>
 
         [HttpGet]
-        [Route("GetById/{precio}")]
+        [Route("GetByPrecio/{precio}")]
         public IActionResult Get(decimal precio)
         {
             List<platos> platos = (from e in _RestauranteContexto.platos

@@ -16,64 +16,64 @@ namespace L01_2022CP602_2022HZ651.Controllers
             _Pedidoscontext = context;
         }
 
-        //// Obtener todos los pedidos con JOIN para incluir detalles del cliente y motorista
-        //[HttpGet]
-        //[Route("GetAll")]
-        //public IActionResult GetAll()
-        //{
-        //    var pedidos = _Pedidoscontext.pedidos
-        //        .Include(p => p.cliente) // Relación con clientes
-        //        .Include(p => p.Motorista) // Relación con motoristas
-        //        .Include(p => p.Plato) // Relación con platos
-        //        .ToList();
+        // EndPoint que retornar el listado de pedidos filtrado por cliente
 
-        //    if (!pedidos.Any())
-        //    {
-        //        return NotFound("No hay pedidos registrados.");
-        //    }
+        [HttpGet]
+        [Route("getBycliente/{nombreCliente}")]
+        public IActionResult GetByCliente(string nombreCliente)
+        {
+            var resultado = (from p in _Pedidoscontext.pedidos
+                             join c in _Pedidoscontext.clientes on p.clienteId equals c.clienteId
+                             join m in _Pedidoscontext.motoristas on p.motoristaId equals m.motoristaId
+                             join pl in _Pedidoscontext.platos on p.platoId equals pl.platoId
+                             where c.nombreCliente == nombreCliente
+                             select new
+                             {
+                                 pedidoId = p.pedidoId,
+                                 p.cantidad,
+                                 p.precio,
+                                 NombreMotorista = m.nombreMotorista,
+                                 NombrePlato = pl.nombrePlato,
+                                 NombreCliente = c.nombreCliente
+                             }).ToList();
 
-        //    return Ok(pedidos);
-        //}
+            if (!resultado.Any())
+            {
+                return NotFound();
+            }
 
-        //// ✅ Obtener pedidos filtrados por cliente
-        //[HttpGet]
-        //[Route("GetByCliente/{clienteId}")]
-        //public IActionResult GetByCliente(int clienteId)
-        //{
-        //    var pedidos = _Pedidoscontext.pedidos
-        //        .Where(p => p.clienteId == clienteId)
-        //        .Include(p => p.Cliente)
-        //        .Include(p => p.Plato)
-        //        .ToList();
+            return Ok(resultado);
+        }
+        // EndPoint que retornar el listado de pedidos filtrado por motorista
 
-        //    if (!pedidos.Any())
-        //    {
-        //        return NotFound($"No hay pedidos para el cliente con ID {clienteId}.");
-        //    }
+        [HttpGet]
+        [Route("getBymotorista/{nombreMotorista}")]
+        public IActionResult GetByMotorista(string nombreMotorista)
+        {
+            var resultado = (from p in _Pedidoscontext.pedidos
+                             join c in _Pedidoscontext.clientes on p.clienteId equals c.clienteId
+                             join m in _Pedidoscontext.motoristas on p.motoristaId equals m.motoristaId
+                             join pl in _Pedidoscontext.platos on p.platoId equals pl.platoId
+                             where m.nombreMotorista == nombreMotorista
+                             select new
+                             {
+                                 pedidoId = p.pedidoId,
+                                 p.cantidad,
+                                 p.precio,
+                                 NombreMotorista = m.nombreMotorista,
+                                 NombrePlato = pl.nombrePlato,
+                                 NombreCliente = c.nombreCliente
+                             }).ToList();
 
-        //    return Ok(pedidos);
-        //}
+            if (!resultado.Any())
+            {
+                return NotFound();
+            }
 
-        //// ✅ Obtener pedidos filtrados por motorista
-        //[HttpGet]
-        //[Route("GetByMotorista/{motoristaId}")]
-        //public IActionResult GetByMotorista(int motoristaId)
-        //{
-        //    var pedidos = _Pedidoscontext.pedidos
-        //        .Where(p => p.motoristaId == motoristaId)
-        //        .Include(p => p.Motorista)
-        //        .Include(p => p.Plato)
-        //        .ToList();
+            return Ok(resultado);
+        }
 
-        //    if (!pedidos.Any())
-        //    {
-        //        return NotFound($"No hay pedidos asignados al motorista con ID {motoristaId}.");
-        //    }
-
-        //    return Ok(pedidos);
-        //}
-
-        // ✅ Agregar un nuevo pedido
+        //EndPoint de agregar un nuevo pedido
         [HttpPost]
         [Route("Add")]
         public IActionResult AddPedido([FromBody] pedidos pedido)
@@ -90,7 +90,7 @@ namespace L01_2022CP602_2022HZ651.Controllers
             }
         }
 
-        // ✅ Actualizar un pedido
+        // EndPoint de actualizar un pedido
         [HttpPut]
         [Route("Update/{id}")]
         public IActionResult UpdatePedido(int id, [FromBody] pedidos pedidoActualizar)
@@ -114,12 +114,15 @@ namespace L01_2022CP602_2022HZ651.Controllers
             return Ok(pedidoActual);
         }
 
-        // ✅ Eliminar un pedido
+        // EndPoint de eliminar un pedido
         [HttpDelete]
         [Route("Delete/{id}")]
         public IActionResult DeletePedido(int id)
         {
-            var pedido = _Pedidoscontext.pedidos.Find(id);
+
+            pedidos? pedido = (from e in _Pedidoscontext.pedidos
+                               where e.pedidoId == id
+                               select e).FirstOrDefault();
 
             if (pedido == null)
             {
@@ -131,5 +134,34 @@ namespace L01_2022CP602_2022HZ651.Controllers
 
             return Ok($"Pedido con ID {id} eliminado correctamente.");
         }
+
+        //EndPoint del TOP N de los platos que mas pedidos tienen
+        [HttpGet]
+        [Route("GetTopPlatos/{topN}")]
+        public IActionResult GetTopPlatos(int topN)
+        {
+            var topPlatos = _Pedidoscontext.pedidos
+                .GroupBy(p => p.platoId)
+                .Select(g => new
+                {
+                    PlatoId = g.Key,
+                    CantidadTotal = g.Sum(p => p.cantidad),
+                    NombrePlato = _Pedidoscontext.platos
+                        .Where(pl => pl.platoId == g.Key)
+                        .Select(pl => pl.nombrePlato)
+                        .FirstOrDefault()
+                })
+                .OrderByDescending(p => p.CantidadTotal)
+                .Take(topN)
+                .ToList();
+
+            if (!topPlatos.Any())
+            {
+                return NotFound("No hay pedidos registrados.");
+            }
+
+            return Ok(topPlatos);
+        }
+
     }
 }
