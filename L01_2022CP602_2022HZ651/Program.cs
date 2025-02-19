@@ -1,3 +1,5 @@
+using Microsoft.EntityFrameworkCore;
+using L01_2022CP602_2022HZ651.Models;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
@@ -7,7 +9,6 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
-var app = builder.Build();
 //Inyeccion por dependencoa del string de conexion al contexto 
 builder.Services.AddDbContext<RestauranteContext>(options =>
         options.UseSqlServer(
@@ -21,6 +22,11 @@ builder.Services.AddDbContext<RestauranteContext>(options =>
             builder.Configuration.GetConnectionString("RestauranteCarolina")
         )
 );
+
+var app = builder.Build();
+
+
+
 
 // Configure the HTTP request pipeline.
 if (app.Environment.IsDevelopment())
