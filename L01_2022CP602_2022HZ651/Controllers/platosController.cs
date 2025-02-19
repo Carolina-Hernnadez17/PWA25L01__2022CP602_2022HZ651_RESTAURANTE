@@ -17,7 +17,7 @@ namespace L01_2022CP602_2022HZ651.Controllers
         }
 
         /// <summary>
-        /// EndPoint que retorna el listado de todos los platos existentes
+        /// EndPoint que retorna el listado de todos los platos existentes en la bd
         /// </summary>
         /// <returns></returns>
 
