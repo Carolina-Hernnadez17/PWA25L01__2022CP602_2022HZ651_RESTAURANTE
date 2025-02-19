@@ -16,48 +16,42 @@ namespace L01_2022CP602_2022HZ651.Controllers
             _RestauranteContext = restauranteContext;
         }
 
-        // EndPoint que retorna el listado de todos los motoristas existentes
-
+        // Obtener todos los motoristas
         [HttpGet]
         [Route("GetAll")]
-        public IActionResult Get()
+        public IActionResult GetAll()
         {
-            List<motoristas> listadoMotorista = (from e in _RestauranteContext.motoristas
-                                                 select e).ToList();
+            var motoristas = _RestauranteContext.motoristas.ToList();
 
-            if (listadoMotorista.Count() == 0)
+            if (!motoristas.Any())
             {
-                return NotFound();
+                return NotFound("No hay motoristas registrados.");
             }
 
-            return Ok(listadoMotorista);
+            return Ok(motoristas);
         }
 
-
-
-        // EndPoint que retorna los registros de una tabla filtrados por el nombre
-
+        // Obtener motoristas filtrados por nombre
         [HttpGet]
-        [Route("getById/{filtro}")]
-        public IActionResult Get(string filtro)
+        [Route("GetByNombre/{nombre}")]
+        public IActionResult GetByNombre(string nombre)
         {
-            motoristas? motorista = (from m in _RestauranteContext.motoristas
-                                     where m.nombreMotorista.Contains(filtro)
-                                     select m).FirstOrDefault();
+            var motoristas = _RestauranteContext.motoristas
+                .Where(m => m.nombreMotorista.Contains(nombre))
+                .ToList();
 
-            if (motorista == null)
+            if (!motoristas.Any())
             {
-                return NotFound();
+                return NotFound($"No hay motoristas con el nombre '{nombre}'.");
             }
 
-            return Ok(motorista);
+            return Ok(motoristas);
         }
 
-        // EndPoint que agrega nuevos motorista a la tabla
-
+        // Agregar un nuevo motorista
         [HttpPost]
         [Route("Add")]
-        public IActionResult GuardarMotorista([FromBody] motoristas motorista)
+        public IActionResult Add([FromBody] motoristas motorista)
         {
             try
             {
@@ -67,47 +61,46 @@ namespace L01_2022CP602_2022HZ651.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex.Message);
+                return BadRequest($"Error al agregar motorista: {ex.Message}");
             }
         }
 
-        // EndPoint que actualiza los datos del motorista 
+        // Actualizar un motorista
         [HttpPut]
-        [Route("actualizar/{id}")]
-        public IActionResult ActualizarMotorista(int id, [FromBody] motoristas motoristaModificar)
+        [Route("Update/{id}")]
+        public IActionResult Update(int id, [FromBody] motoristas motoristaModificar)
         {
-            motoristas? motoristaActual = (from m in _RestauranteContext.motoristas
-                                           where m.motoristaId == id
-                                           select m).FirstOrDefault();
+            var motoristaActual = _RestauranteContext.motoristas.Find(id);
 
             if (motoristaActual == null)
-            { return NotFound(); }
+            {
+                return NotFound($"No se encontró un motorista con ID {id}.");
+            }
 
             motoristaActual.nombreMotorista = motoristaModificar.nombreMotorista;
 
             _RestauranteContext.Entry(motoristaActual).State = EntityState.Modified;
             _RestauranteContext.SaveChanges();
 
-            return Ok(motoristaModificar);
+            return Ok(motoristaActual);
         }
 
-
+        // Eliminar un motorista
         [HttpDelete]
-        [Route("eliminar/{id}")]
-        public IActionResult EliminarEquipo(int id)
+        [Route("Delete/{id}")]
+        public IActionResult Delete(int id)
         {
-            motoristas? motorista = (from m in _RestauranteContext.motoristas
-                                     where m.motoristaId == id
-                                     select m).FirstOrDefault();
+            var motorista = _RestauranteContext.motoristas.Find(id);
 
             if (motorista == null)
-                return NotFound();
+            {
+                return NotFound($"No se encontró un motorista con ID {id}.");
+            }
 
-            _RestauranteContext.motoristas.Attach(motorista);
             _RestauranteContext.motoristas.Remove(motorista);
             _RestauranteContext.SaveChanges();
 
-            return Ok(motorista);
+            return Ok($"Motorista con ID {id} eliminado correctamente.");
         }
     }
 }
